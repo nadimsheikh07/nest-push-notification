@@ -1,15 +1,23 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+} from '@nestjs/common';
 import { NotificationService } from './notification.service';
 import { CreateNotificationDto } from './dto/create-notification.dto';
 import { UpdateNotificationDto } from './dto/update-notification.dto';
 
-@Controller('notification')
+@Controller('notifications') // plural is more REST-friendly
 export class NotificationController {
   constructor(private readonly notificationService: NotificationService) {}
 
   @Post()
-  create(@Body() createNotificationDto: CreateNotificationDto) {
-    return this.notificationService.create(createNotificationDto);
+  create(@Body() dto: CreateNotificationDto) {
+    return this.notificationService.create(dto);
   }
 
   @Get()
@@ -19,16 +27,26 @@ export class NotificationController {
 
   @Get(':id')
   findOne(@Param('id') id: string) {
-    return this.notificationService.findOne(+id);
+    return this.notificationService.findOne(id);
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateNotificationDto: UpdateNotificationDto) {
-    return this.notificationService.update(+id, updateNotificationDto);
+  update(@Param('id') id: string, @Body() dto: UpdateNotificationDto) {
+    return this.notificationService.update(id, dto);
   }
 
   @Delete(':id')
   remove(@Param('id') id: string) {
-    return this.notificationService.remove(+id);
+    return this.notificationService.remove(id);
+  }
+
+  @Get('user/:userId')
+  findByUser(@Param('userId') userId: string) {
+    return this.notificationService.findByUser(userId);
+  }
+
+  @Patch('read/:id')
+  markAsRead(@Param('id') id: string) {
+    return this.notificationService.markAsRead(id);
   }
 }
