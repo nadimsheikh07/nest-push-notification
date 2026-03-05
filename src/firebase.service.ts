@@ -1,33 +1,56 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import * as admin from 'firebase-admin';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class FirebaseService {
-  constructor() {
-    admin.initializeApp({
-      credential: admin.credential.cert({
-        projectId: process.env.FCM_PROJECT_ID,
-        privateKey: process.env.FCM_PRIVATE_KEY.replace(/\\n/g, '\n'),
-        clientEmail: process.env.FCM_CLIENT_EMAIL,
-      }),
-    });
+  private readonly logger = new Logger(FirebaseService.name);
+
+  constructor(private configService: ConfigService) {
+    // Initialize Firebase only once
+    if (!admin.apps.length) {
+      admin.initializeApp({
+        credential: admin.credential.cert({
+          projectId: this.configService.get<string>('FCM_PROJECT_ID'),
+          privateKey: this.configService
+            .get<string>('FCM_PRIVATE_KEY')
+            ?.replace(/\\n/g, '\n'),
+          clientEmail: this.configService.get<string>('FCM_CLIENT_EMAIL'),
+        }),
+      });
+      this.logger.log('Firebase initialized');
+    }
   }
 
+  /**
+   * Send FCM notification to a single device
+   * @param token Device FCM token
+   * @param title Notification title
+   * @param body Notification body
+   * @param data Optional data payload
+   */
   async sendNotification(
     token: string,
     title: string,
     body: string,
-    data?: any,
+    data?: Record<string, string>,
   ) {
-    const message: admin.messaging.Message = {
-      token,
-      notification: {
-        title,
-        body,
-      },
-      data,
-    };
+    try {
+      const message: admin.messaging.Message = {
+        token,
+        notification: {
+          title,
+          body,
+        },
+        data,
+      };
 
-    return admin.messaging().send(message);
+      const response = await admin.messaging().send(message);
+      this.logger.log(`Notification sent: ${response}`);
+      return response;
+    } catch (error) {
+      this.logger.error('Error sending notification', error);
+      throw error;
+    }
   }
 }
