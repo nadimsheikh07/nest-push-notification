@@ -11,13 +11,14 @@ export class FirebaseService {
     if (!admin.apps.length) {
       admin.initializeApp({
         credential: admin.credential.cert({
-          projectId: this.configService.get<string>('FCM_PROJECT_ID'),
-          privateKey: this.configService
-            .get<string>('FCM_PRIVATE_KEY')
+          project_id: this.configService.get<string>('FIREBASE_PROJECT_ID'),
+          private_key: this.configService
+            .get<string>('FIREBASE_PRIVATE_KEY')
             ?.replace(/\\n/g, '\n'),
-          clientEmail: this.configService.get<string>('FCM_CLIENT_EMAIL'),
-        }),
+          client_email: this.configService.get<string>('FIREBASE_CLIENT_EMAIL'),
+        } as admin.ServiceAccount),
       });
+
       this.logger.log('Firebase initialized');
     }
   }
