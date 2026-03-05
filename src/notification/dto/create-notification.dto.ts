@@ -7,6 +7,10 @@ export class CreateNotificationDto {
 
   @IsString()
   @IsNotEmpty()
+  token: string;
+
+  @IsString()
+  @IsNotEmpty()
   title: string;
 
   @IsString()

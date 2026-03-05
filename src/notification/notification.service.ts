@@ -8,17 +8,28 @@ import {
 } from './entities/notification.entity';
 import { CreateNotificationDto } from './dto/create-notification.dto';
 import { UpdateNotificationDto } from './dto/update-notification.dto';
+import { FirebaseService } from 'src/firebase.service';
 
 @Injectable()
 export class NotificationService {
   constructor(
     @InjectModel(Notification.name)
     private readonly notificationModel: Model<NotificationDocument>,
+    private readonly firebaseService: FirebaseService,
   ) {}
 
-  async create(dto: CreateNotificationDto): Promise<Notification> {
-    const notification = new this.notificationModel(dto);
-    return notification.save();
+  async create(createNotificationDto: CreateNotificationDto) {
+    const { token, title, body, data } = createNotificationDto;
+
+    // Save notification in DB (optional)
+    const notification = await this.notificationModel.create(
+      createNotificationDto,
+    );
+
+    // Send push notification
+    await this.firebaseService.sendNotification(token, title, body, data);
+
+    return notification;
   }
 
   async findAll(): Promise<Notification[]> {
@@ -31,12 +42,23 @@ export class NotificationService {
     return notification;
   }
 
-  async update(id: string, dto: UpdateNotificationDto): Promise<Notification> {
-    const updated = await this.notificationModel
-      .findByIdAndUpdate(id, dto, { new: true })
-      .exec();
-    if (!updated) throw new NotFoundException('Notification not found');
-    return updated;
+  async update(id: string, updateNotificationDto: UpdateNotificationDto) {
+    const notification = await this.notificationModel.findByIdAndUpdate(
+      id,
+      updateNotificationDto,
+      { new: true },
+    );
+
+    if (notification?.token) {
+      await this.firebaseService.sendNotification(
+        notification.token,
+        notification.title,
+        notification.body,
+        notification.data,
+      );
+    }
+
+    return notification;
   }
 
   async remove(id: string): Promise<{ message: string }> {

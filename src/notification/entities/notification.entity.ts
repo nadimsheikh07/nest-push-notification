@@ -6,7 +6,10 @@ export type NotificationDocument = Notification & Document;
 @Schema({ timestamps: true })
 export class Notification {
   @Prop()
-  userId: string;
+  userId?: string;
+
+  @Prop()
+  token: string;
 
   @Prop()
   title: string;
