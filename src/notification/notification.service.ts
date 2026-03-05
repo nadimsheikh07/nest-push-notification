@@ -38,18 +38,27 @@ export class NotificationService {
 
   async findOne(id: string): Promise<Notification> {
     const notification = await this.notificationModel.findById(id).exec();
-    if (!notification) throw new NotFoundException('Notification not found');
-    return notification;
+
+    if (!notification) {
+      throw new NotFoundException('Notification not found');
+    }
+
+    return notification as Notification;
   }
 
-  async update(id: string, updateNotificationDto: UpdateNotificationDto) {
-    const notification = await this.notificationModel.findByIdAndUpdate(
-      id,
-      updateNotificationDto,
-      { new: true },
-    );
+  async update(
+    id: string,
+    updateNotificationDto: UpdateNotificationDto,
+  ): Promise<Notification> {
+    const notification = await this.notificationModel
+      .findByIdAndUpdate(id, updateNotificationDto, { new: true })
+      .exec();
 
-    if (notification?.token) {
+    if (!notification) {
+      throw new NotFoundException('Notification not found');
+    }
+
+    if (notification.token) {
       await this.firebaseService.sendNotification(
         notification.token,
         notification.title,
@@ -58,7 +67,7 @@ export class NotificationService {
       );
     }
 
-    return notification;
+    return notification as Notification;
   }
 
   async remove(id: string): Promise<{ message: string }> {
